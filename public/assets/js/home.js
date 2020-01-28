@@ -34,11 +34,34 @@ function handleFormSubmit(event) {
   $emailInput.val('');
   $passwordInput.val('');
 
-  authenticateUser(email, password);
+  authenticateUser(email, password); //sends the information via AJAX
 }
 
 function displayMessage(message, type) {
   $message.text(message).attr('class', type);
+}
+
+function handleSignupResponse(status) {
+  if (status === 'success') {
+    displayMessage('Registered successfully! You may now sign in.', 'success');
+    setAuth('login');
+  } else {
+    displayMessage(
+      'Somethin went wrong. A user with this account may already exits.', 'danger'
+    );
+  }
+}
+
+function handleLoginResponse(data, status, jqXHR) {
+  if (status === 'success') {
+    let jwt = jqXHR.getResponseHeader('authorization'); //if success returns the JSON web token
+    let user = JSON.stringify(data);        //turn user info into string
+
+    localStorage.setItem('authorization', jwt); //setting authorization key to jwt via local storage
+    localStorage.setItem('user', user);
+  } else {
+    displayMesssage('Invalid email or password', 'danger');
+  }
 }
 
 function authenticateUser(email, password) {
@@ -51,8 +74,19 @@ function authenticateUser(email, password) {
       }
     },
     method: 'POST'
-  }).then(function(data) {
-    console.log(data);
+  }).then(function(data, status, jqXHR) {
+    if (authSetting === 'signup') {
+      handleSignupResponse(status);
+    } else {
+      handleLoginResponse(data, status, jqXHR);
+    }
+  })
+  .catch(function(err) {
+    if (authSetting === 'signup') {
+      handleSignupResponse(err.statusText);
+    } else {
+      handleLoginResponse(err.statusText);
+    }  
   });
 }
 
