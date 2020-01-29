@@ -3,6 +3,8 @@ const $boardContainer = $('.container');
 const $boardName = $('header > h1');
 const $createListInput = $('#create-list input');
 const $saveListButton = $('#create-list .save');
+const $createCardInput = $('#create-card textarea');
+const $saveCardButton = $('#create-card .save');
 
 let board; //creating global variable to hold the board object
 
@@ -37,16 +39,38 @@ function handleLogout() {
   });
 }
 
+function createCards(cards){
+  let $cardUl = $('<ul>');
+
+  let $cardLis = cards.map(function(card) { //runs through the cards
+    let $cardLi = $('<li>'); //adds a li for each card
+    let $cardButton = $('<button>').text(card.text);
+
+    $cardLi.append($cardButton); //adds the button to the card li item
+
+    return $cardLi; //returns cards in the list
+  });
+
+  $cardUl.append($cardLis); //adds the cards to the unordered list
+
+  return $cardUl;
+}
+
 function createLists(lists) {
   let $listContainers = lists.map(function(list) {    //runs through all the lists
-    let $listContainer = $('<div class="list">'); //creates a div for each list
+    let $listContainer = $('<div class="list">').data('id', list.id); //creates a div for each list, sets data id to list id
     let $header = $('<header>');    //creates a header
     let $headerButton = $('<button>').text(list.title); //creates a header button
-    let $addCardButton = $('<button>Add a card...</button>');
+    let $cardUl = createCards(list.cards);
+    let $addCardButton = $('<button>Add a card...</button>').on(
+      'click',
+      openCardCreateModal
+      );
 
     $header.append($headerButton);
     $listContainer.append($header);
-    $listContainer.append($addCardButton);
+    $listContainer.append($cardUl); //lists the cards
+    $listContainer.append($addCardButton); //puts add card button at end of list of cards
 
     return $listContainer; 
   });
@@ -99,5 +123,40 @@ function handleListCreate(event) {
   });
 }
 
+function openCardCreateModal(event) {
+  let $listContainer = $(event.target).parents('.list'); //search DOM for a parent element of the button that has the class of list
+  let listId = $listContainer.data('id'); //uses the fata id in the container to assign list id
+
+  $saveCardButton.data('id', listId); //allows us to acces the listId whenever the create-card save button is clicked
+
+  $createCardInput.val('');
+  MicroModal.show('create-card');
+}
+
+function handleCardCreate(event) {
+  event.preventDefault();
+
+  let listId = $(event.target).data('id');
+  let cardText = $createCardInput.val().trim();
+
+  if(!cardText) {
+    MicroModal.close('create-list');
+    return;
+  }
+
+  $.ajax({
+    url: '/api/cards',
+    method: 'POST',
+    data : {
+      list_id: listId,
+      text: cardText
+    }
+  }).then(function() {
+    init();
+    MicroModal.close('create-card');
+  });
+}
+
+$saveCardButton.on('click', handleCardCreate);
 $saveListButton.on('click', handleListCreate);
 $logoutButton.on('click', handleLogout);
