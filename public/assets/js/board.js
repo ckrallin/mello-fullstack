@@ -5,6 +5,9 @@ const $createListInput = $('#create-list input');
 const $saveListButton = $('#create-list .save');
 const $createCardInput = $('#create-card textarea');
 const $saveCardButton = $('#create-card .save');
+const $editListInput = $('#edit-list input');
+const $editListSaveButton = $('#edit-list .save');
+const $editListDeleteButton = $('#edit-list .delete');
 
 let board; //creating global variable to hold the board object
 
@@ -60,7 +63,10 @@ function createLists(lists) {
   let $listContainers = lists.map(function(list) {    //runs through all the lists
     let $listContainer = $('<div class="list">').data('id', list.id); //creates a div for each list, sets data id to list id
     let $header = $('<header>');    //creates a header
-    let $headerButton = $('<button>').text(list.title); //creates a header button
+    let $headerButton = $('<button>')
+      .text(list.title) //creates a header button
+      .data(list)       //store entire list object to be used later
+      .on('click', openListEditModal);
     let $cardUl = createCards(list.cards);
     let $addCardButton = $('<button>Add a card...</button>').on(
       'click',
@@ -157,6 +163,55 @@ function handleCardCreate(event) {
   });
 }
 
+function openListEditModal(event) {
+  let listData = $(event.target).data(); //turns the native DOM element into a jQuery event, grabs the data for us to manipulate
+  
+  $editListInput.val(listData.title); //populate current list title into input
+  $editListSaveButton.data(listData); //allows us to access the data through the event.target in handleListEdit
+  $editListDeleteButton.data(listData);
+
+  MicroModal.show('edit-list');
+}
+
+function handleListEdit() {
+  event.preventDefault();
+
+  let { title, id } = $(event.target).data(); //destructuring allows us to take title and id from the current list to define those variables
+  let newTitle =$editListInput.val().trim();
+
+  if(!newTitle || newTitle === title) {
+    MicroModal.close('edit-list');
+    return;
+  }
+
+  $.ajax({
+    url: `/api/lists/${id}`,
+    method: 'PUT',
+    data: {
+      title: newTitle
+    }
+  }).then(function() {
+    init();
+    MicroModal.close('edit-list');
+  });
+}
+
+function handleListDelete() {
+  event.preventDefault();
+
+  let { id } = $(event.target).data();
+
+  $.ajax({
+    url: `/api/lists/${id}`,
+    method: 'DELETE'
+  }).then(function() {
+    init();
+    MicroModal.close('edit-list')
+  });
+}
+
 $saveCardButton.on('click', handleCardCreate);
 $saveListButton.on('click', handleListCreate);
 $logoutButton.on('click', handleLogout);
+$editListSaveButton.on('click', handleListEdit);
+$editListDeleteButton.on('click', handleListDelete);
