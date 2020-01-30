@@ -8,6 +8,9 @@ const $saveCardButton = $('#create-card .save');
 const $editListInput = $('#edit-list input');
 const $editListSaveButton = $('#edit-list .save');
 const $editListDeleteButton = $('#edit-list .delete');
+const $editCardInput = $('#edit-card textarea');
+const $editCardSaveButton = $('#edit-card .save');
+const $editCardDeleteButton = $('#edit-card .delete');
 
 let board; //creating global variable to hold the board object
 
@@ -47,7 +50,10 @@ function createCards(cards){
 
   let $cardLis = cards.map(function(card) { //runs through the cards
     let $cardLi = $('<li>'); //adds a li for each card
-    let $cardButton = $('<button>').text(card.text);
+    let $cardButton = $('<button>')
+      .text(card.text)
+      .data(card)
+      .on('click', openCardEditModal);    //associating card data with the card button
 
     $cardLi.append($cardButton); //adds the button to the card li item
 
@@ -210,8 +216,57 @@ function handleListDelete() {
   });
 }
 
+function openCardEditModal(event) {
+  let cardData = $(event.target).data();
+
+  $editCardInput.val(cardData.text);
+  $editCardSaveButton.data(cardData);
+  $editCardDeleteButton.data(cardData);
+
+  MicroModal.show('edit-card');
+}
+
+function handleCardSave(event) {
+  event.preventDefault();
+
+  let { text, id } = $(event.target).data();
+  let newText = $editCardInput.val().trim();
+
+  if (!newText || newText === text) {
+    MicroModal.close('edit-card');
+    return;
+  }
+
+  $.ajax({
+    url: `/api/cards/${id}`,
+    method: 'PUT',
+    data: {
+      text: newText
+    }
+  }).then(function() {
+    init();
+    MicroModal.close('edit-card');
+  });
+}
+
+function handleCardDelete(event) {
+  event.preventDefault();
+
+  let { id } = $(event.target).data();
+
+  $.ajax({
+    url: `/api/cards/${id}`,
+    method: 'DELETE',
+  }).then(function() {
+    init();
+    MicroModal.close('edit-card');
+  });
+}
+
 $saveCardButton.on('click', handleCardCreate);
 $saveListButton.on('click', handleListCreate);
 $logoutButton.on('click', handleLogout);
 $editListSaveButton.on('click', handleListEdit);
 $editListDeleteButton.on('click', handleListDelete);
+$editCardSaveButton.on('click', handleCardSave);
+$editCardDeleteButton.on('click', handleCardDelete);
