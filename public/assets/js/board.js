@@ -67,7 +67,7 @@ function createCards(cards){
 
 function createLists(lists) {
   let $listContainers = lists.map(function(list) {    //runs through all the lists
-    let $listContainer = $('<div class="list">').data('id', list.id); //creates a div for each list, sets data id to list id
+    let $listContainer = $('<div class="list">').data(list); //creates a div for each list, sets data to the list element
     let $header = $('<header>');    //creates a header
     let $headerButton = $('<button>')
       .text(list.title) //creates a header button
@@ -105,6 +105,38 @@ function renderBoard() {
 
   $boardContainer.empty();
   $boardContainer.append($lists);
+
+  makeSortable();
+}
+
+function makeSortable() {
+  Sortable.create($boardContainer[0], {       //gives us reference to the .container element
+    animation: 150,
+    ghostClass: 'ghost',
+    filter: '.add',       //elements that match the .add selector shouldnt be draggable
+    easing: 'cubic-bezier(0.785, 0.135, 0.15, 0.85)',
+    onMove: function(event) {
+      let shouldMove = !$(event.related).hasClass('add'); //boolean for should move if it has the class add returns false
+      return shouldMove;
+    },
+    onEnd: function(event) {          //called at the end of drag and drop
+      let { id, position } = $(event.item).data();
+      let newPosition = event.newIndex + 1;
+
+      if (position === newPosition) {
+        return;
+      }
+      $.ajax({
+        url: `/api/lists/${id}`,
+        data: {
+          position: newPosition
+        },
+        method: 'PUT'
+      }).then(function(){
+        init();
+      });
+    }
+  });  
 }
 
 function openListCreateModal() {
