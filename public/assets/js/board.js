@@ -45,14 +45,14 @@ function handleLogout() {
   });
 }
 
-function createCards(cards){
+function createCards(list){
   let $cardUl = $('<ul>');
 
-  let $cardLis = cards.map(function(card) { //runs through the cards
+  let $cardLis = list.cards.map(function(card) { //runs through the cards
     let $cardLi = $('<li>'); //adds a li for each card
     let $cardButton = $('<button>')
       .text(card.text)
-      .data(card)
+      .data({...card, list_id: list.id}) //...spreads the function
       .on('click', openCardEditModal);    //associating card data with the card button
 
     $cardLi.append($cardButton); //adds the button to the card li item
@@ -73,7 +73,7 @@ function createLists(lists) {
       .text(list.title) //creates a header button
       .data(list)       //store entire list object to be used later
       .on('click', openListEditModal);
-    let $cardUl = createCards(list.cards);
+    let $cardUl = createCards(list);
     let $addCardButton = $('<button>Add a card...</button>').on(
       'click',
       openCardCreateModal
@@ -136,6 +136,39 @@ function makeSortable() {
         init();
       });
     }
+  });
+
+  $('.list > ul').each(function(index, element) {
+    Sortable.create(element, {
+      animation: 150,
+      ghostClass: 'ghost',
+      easing: 'cubic-bezier(0.785, 0.135, 0.15, 0.86)',
+      group: 'shared',         ///allows us to pass between lists
+      onEnd: function(event) {
+        let { id, position, list_id } = $(event.item)
+          .find('button')       //getting any child of the li that is a button and returning the data method.
+          .data();
+        let newPosition = event.newIndex + 1;
+        let newListId = $(event.item)
+          .parents('.list')
+          .data('id');
+
+        if (position === newPosition && list_id === newListId) {
+          return;
+        }
+
+        $.ajax({
+          url: `/api/cards/${id}`,
+          method: 'PUT',
+          data: {
+            list_id: newListId,
+            position: newPosition
+          }
+        }).then(function() {
+          init();
+        });
+      }
+    });
   });  
 }
 
