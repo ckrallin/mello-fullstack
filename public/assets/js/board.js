@@ -11,6 +11,10 @@ const $editListDeleteButton = $('#edit-list .delete');
 const $editCardInput = $('#edit-card textarea');
 const $editCardSaveButton = $('#edit-card .save');
 const $editCardDeleteButton = $('#edit-card .delete');
+const $contributorModalButton = $('#contributors');
+const $contributorModalInput = $('#contributor-email');
+const $contributorModalSaveButton = $('#contribute .save');
+const $contributorModalList = $('#contributors-content ul');
 
 let board; //creating global variable to hold the board object
 
@@ -107,6 +111,17 @@ function renderBoard() {
   $boardContainer.append($lists);
 
   makeSortable();
+  renderContributors();
+}
+
+function renderContributors() {
+  let $contributorListItems = board.users.map(function(user) {
+    let $contributorListItem = $('<li>').text(user.email);
+    return $contributorListItem;
+  });
+
+  $contributorModalList.empty();
+  $contributorModalList.append($contributorListItems);
 }
 
 function makeSortable() {
@@ -328,6 +343,72 @@ function handleCardDelete(event) {
   });
 }
 
+function handleContributorSave(event) {
+  event.preventDefault();
+
+  let emailRegex = /.+@.+\..+/;     ///makes sure its a regular email address
+
+  let contributorEmail = $contributorModalInput
+    .val()
+    .trim()
+    .toLowerCase();
+
+  $contributorModalInput.val('');
+
+  if (!emailRegex.test(contributorEmail)) {   //tests that it is a regular expression
+    displayMessage(`Must provide a valid email address`, 'danger');
+    return;
+  }
+
+  let contributor = board.users.find(function(user) {   //search for the user
+    return user.email === contributorEmail;
+  });
+
+  if (contributor) {
+    displayMessage(
+      `${contributorEmail} already has access to the board`, 
+      'danger'
+    );  //if the user already exists prompt this
+    return;
+  }
+
+  $.ajax({
+    url: '/api/user_boards',
+    method: 'POST',
+    data : {
+      email: contributorEmail,
+      board_id: board.id
+    }
+  }).then(function() {
+    init();
+    displayMessage(
+      `Successfully added ${contributorEmail} to the board`,
+      success
+    );
+  })
+  .catch(function() {
+    displayMessage(
+      `Cannot find user with email: ${contributorEmail}`,
+      'danger' 
+    );
+  });
+}
+
+function openContributorModal() {
+  $contributorModalInput.val('');
+  displayMessage('');
+
+  MicroModal.show('contribute');
+}
+
+function displayMessage(msg, type = 'hidden') {
+  $('#contribute .message')
+    .attr('class', `message ${type}`)
+    .text(msg);
+}
+
+$contributorModalSaveButton.on('click', handleContributorSave);
+$contributorModalButton.on('click', openContributorModal);
 $saveCardButton.on('click', handleCardCreate);
 $saveListButton.on('click', handleListCreate);
 $logoutButton.on('click', handleLogout);
