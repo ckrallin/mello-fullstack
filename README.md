@@ -1,24 +1,30 @@
-# README
+# Mello
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This is a kanban board app created to expand my knowledge of Javascript and jQuery. Users can create an account, allowing them to create boards to organize and complete tasks. 
 
-Things you may want to cover:
+The app was built within a Ruby on Rails framework. The information is saved to a PostgreSQL database. jQuery was used for all the functionality of the app, from handling account creation, to adding boards, lists and cards. The use of Javascript and jQuery allowed for realtime DOM updates without page refreshes.
 
-* Ruby version
+## Click [here](https://mello-fullstack.herokuapp.com/) to visit the website!
 
-* System dependencies
+This is the login page:
 
-* Configuration
+![Login Screenshot](./app/assets/images/mello1.png)
 
-* Database creation
+Once logged in the user's available boards get displayed:
 
-* Database initialization
+![Boards Screenshot](./app/assets/images/mello2.png)
 
-* How to run the test suite
+Inside the board users can create different lists and cards:
 
-* Services (job queues, cache servers, search engines, etc.)
+![Lists Screenshot](./app/assets/images/mello3.png)
 
-* Deployment instructions
+Users can collaborate with others to help with cards:
 
-* ...
+![Contributors Screenshot](./app/assets/images/mello4.png)
+
+## Tools & Resources
+
+* [Ruby on Rails](https://rubyonrails.org/) 
+* [PostgreSQL](https://www.postgresql.org/)
+* [Bootstrap](https://getbootstrap.com/)
+* [jQuery](https://jqueryui.com/)
